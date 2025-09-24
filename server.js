@@ -19,15 +19,15 @@ io.on('connection', function(socket){
         return;
       }
 
-      // procesamos el mensaje con la librería
+      
       var processed = validation.validateMessage(msg);
       
-      // Si no hay resultado válido, ignorar
+      
       if (!processed) return;
 
-      // Si el mensaje fue bloqueado por contener script u otro contenido malicioso
+      
       if (processed.blocked) {
-        // Solo notificar al remitente, sin broadcast
+        
         socket.emit('Evento-Mensaje-Server', {
           nombre: 'Sistema',
           color: '#FF0000',
@@ -38,11 +38,11 @@ io.on('connection', function(socket){
         return;
       }
 
-      // metadata mínima
+      
       processed.timestamp = Date.now();
       processed.from = socket.id;
 
-      // Solo si no está bloqueado, emitir a todos
+      
       io.emit('Evento-Mensaje-Server', processed);
     } catch (e) {
       console.error('Error procesando mensaje:', e.message);

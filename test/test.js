@@ -66,7 +66,6 @@ describe('Nuevas pruebas - imágenes, videos y seguridad', function(){
   it('acepta un enlace de YouTube (watch?v=) y devuelve URL de embed para el reproductor', function(){
     var res = val.validateMessage({ mensaje: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' });
     assert.equal(res.tipo, 'video');
-    // debe contener la ruta embed
     assert.ok(typeof res.mensaje === 'string' && res.mensaje.indexOf('youtube.com/embed/') !== -1);
   });
 
@@ -78,7 +77,6 @@ describe('Nuevas pruebas - imágenes, videos y seguridad', function(){
 
   it('detecta y bloquea una inyección de script explícita', function(){
     var res = val.validateMessage({ mensaje: '<script>alert(\"xss\")</script>' });
-    // la implementación devuelve un aviso seguro en lugar del payload original
     assert.equal(res.tipo, 'text');
     assert.equal(res.mensaje, '[Mensaje bloqueado: contenido potencialmente malicioso]');
   });

@@ -42,7 +42,6 @@
         return color;
      }
 
-     // Fallback helpers (si el servidor no devuelve tipo)
      function looksLikeImageUrl(url) {
        return typeof url === 'string' && url.match(/\.(jpg|jpeg|png|gif|bmp)(?:[?#].*)?$/i);
      }
@@ -57,7 +56,6 @@
       $(function () {
         var socket = io();
 
-        // emite evento al servidor
         $('form').submit(function(){
             var nombreTxt = $('#nombre').val() || "Anomimo";
             var mensajeTxt = $('#m').val();
@@ -68,63 +66,59 @@
 
             var jsonMsg = { nombre: nombreTxt, mensaje: mensajeTxt, color: colorHexTxt };
 
-            // Enviamos OBJETO (no string). La librería en el servidor acepta ambos.
             socket.emit('Evento-Mensaje-Server', jsonMsg);
 
             $('#m').val('');
             return false;
         });
 
-        // Recepción: ahora el servidor idealmente envía un OBJETO { nombre, color, mensaje, tipo, original, timestamp, from }
         socket.on('Evento-Mensaje-Server', function(payload){
-            // Debug: evitar imprimir payload completo (contiene original que puede ser malicioso)
-            // Mostrar solo campos seguros para depuración.
+            
             try {
               console.log('payload recibido (safe):', { nombre: payload.nombre, tipo: payload.tipo, timestamp: payload.timestamp });
             } catch (e) { /* ignore */ }
 
-            // payload puede ser string en algunos setups; intentar parsear
+            
             if (typeof payload === 'string') {
               try { payload = JSON.parse(payload); }
               catch(e) { /* si no es JSON, lo tratamos como texto */ }
             }
             if (!payload) return;
 
-            // Crear elemento <li> de forma segura (sin innerHTML)
+            
             var $li = $('<li>').addClass('chat-item');
 
-            // Nombre / color
+            
             var nombre = payload.nombre || "Anomimo";
             var color = payload.color || "#000";
             var $bold = $('<b>').css('color', color).text(nombre + ': ');
             $li.append($bold);
 
-            // Determinar tipo (servidor preferencia). Si no existe, hacer fallback en cliente.
+            
             var tipo = payload.tipo || 'text';
             var contenidoUrl = payload.mensaje;
 
-            // Fallback detection si tipo no fue enviado o no es confiable
+            
             if (!payload.tipo || payload.tipo === 'text') {
-              // si parece imagen, renderizar imagen
+            
               if (looksLikeImageUrl(contenidoUrl)) {
                 tipo = 'image';
               } else {
-                // si es youtube, generar embed
+                
                 var embed = getYouTubeEmbedFromUrl(contenidoUrl);
                 if (embed) {
                   tipo = 'video';
-                  contenidoUrl = embed; // usar embed para iframe
+                  contenidoUrl = embed; 
                 }
               }
             }
 
             if (tipo === 'image') {
-                // payload.mensaje debe ser la URL validada de la imagen o el original
+                
                 var $img = $('<img>').attr('src', contenidoUrl).attr('alt', 'Imagen enviada');
                 $li.append($img);
             } else if (tipo === 'video') {
-                // payload.mensaje preferiblemente es la URL embed (https://www.youtube.com/embed/ID)
-                // si servidor envió un video "no embed", getYouTubeEmbedFromUrl ya lo convirtió
+                
                 var $iframe = $('<iframe>')
                   .attr('width', 560)
                   .attr('height', 315)
@@ -134,13 +128,12 @@
                   .attr('allowfullscreen', 'true');
                 $li.append($iframe);
             } else {
-                // Texto: payload.mensaje ya viene escapado por el servidor idealmente.
-                // Aun así, usamos text() para evitar inyección.
+                
                 var $p = $('<span>').text(payload.mensaje);
                 $li.append($p);
             }
 
-            // metadata (timestamp / from)
+          
             var ts = payload.timestamp ? new Date(payload.timestamp) : new Date();
             var metaText = ' ' + ts.toLocaleTimeString();
             if (payload.from) metaText += ' — ' + payload.from;
